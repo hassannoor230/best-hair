@@ -15,7 +15,7 @@ const loginSchema = z.object({
 const AdminLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { setUser } = useAuth();
 
   const {
     register,
@@ -27,8 +27,8 @@ const AdminLogin = () => {
 
   const mutation = useMutation({
     mutationFn: (data) => apiClient.post("/auth/login", data),
-    onSuccess: async (res) => {
-      await login(res.data.data.user.email, res.data.data.user.password || "");
+    onSuccess: (res) => {
+      setUser(res.data.data.user);
       navigate("/admin", { replace: true });
     },
   });
