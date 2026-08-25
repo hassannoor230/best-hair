@@ -1,71 +1,33 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "react-query";
-import { apiClient } from "../../lib/apiClient";
-import { useAuth } from "../../context/AuthContext";
-
-const loginSchema = z.object({
-  email: z.string().email("Valid email is required"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
+import React from "react";
 
 const AdminLogin = () => {
-  const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
-  const { setUser } = useAuth();
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(loginSchema),
-  });
-
-  const mutation = useMutation({
-    mutationFn: (data) => apiClient.post("/auth/login", data),
-    onSuccess: (res) => {
-      setUser(res.data.data.user);
-      navigate("/admin", { replace: true });
-    },
-  });
-
   return (
-    <div className="min-h-screen bg-secondary flex items-center justify-center">
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
       <div className="max-w-md w-full mx-4">
-        <div className="bg-white p-10 rounded-sm shadow-2xl">
+        <div className="bg-[#172A3A] p-10 rounded-2xl shadow-2xl border border-white/10">
           <div className="text-center mb-10">
-            <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-primary font-bold text-2xl">B</span>
+            <div className="w-20 h-20 bg-gradient-to-br from-[#C9A45C] to-[#d4af37] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#C9A45C]/20">
+              <span className="text-[#0a0a0a] font-bold text-3xl">B</span>
             </div>
-            <h1 className="font-heading font-bold text-2xl text-primary">Admin Login</h1>
-            <p className="text-muted mt-2">Sign in to manage your salon</p>
+            <h1 className="font-['Manrope'] font-bold text-3xl text-white mb-2">Admin Login</h1>
+            <p className="text-white/50">Sign in to manage your salon</p>
           </div>
-
-          <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-6">
+          <form action="/admin" method="POST" className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-primary mb-2">Email</label>
-              <input {...register("email")} type="email" className="w-full px-4 py-3 border border-gray-200 rounded-sm focus:ring-2 focus:ring-accent focus:border-transparent" placeholder="admin@example.com" />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+              <label className="block text-sm font-medium text-white/80 mb-2">Email</label>
+              <input name="email" type="email" required className="w-full px-4 py-3 bg-white/10 text-white rounded-xl border border-white/10 focus:border-[#C9A45C] focus:ring-1 focus:ring-[#C9A45C]" placeholder="admin@example.com" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-primary mb-2">Password</label>
-              <div className="relative">
-                <input {...register("password")} type={showPassword ? "text" : "password"} className="w-full px-4 py-3 border border-gray-200 rounded-sm focus:ring-2 focus:ring-accent focus:border-transparent pr-10" placeholder="admin123" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-muted hover:text-primary">
-                  {showPassword ? "Hide" : "Show"}
-                </button>
-              </div>
-              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
+              <label className="block text-sm font-medium text-white/80 mb-2">Password</label>
+              <input name="password" type="password" required className="w-full px-4 py-3 bg-white/10 text-white rounded-xl border border-white/10 focus:border-[#C9A45C] focus:ring-1 focus:ring-[#C9A45C]" placeholder="admin123" />
             </div>
-            <button type="submit" disabled={mutation.isLoading} className="btn-primary w-full disabled:opacity-50">
-              {mutation.isLoading ? "Signing in..." : "Sign In"}
+            <button type="submit" className="w-full bg-gradient-to-r from-[#C9A45C] to-[#d4af37] text-[#0a0a0a] py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-[#C9A45C]/20 transition-all duration-300">
+              Sign In
             </button>
-            {mutation.isError && <p className="text-red-500 text-sm text-center">Invalid credentials</p>}
           </form>
+          <div className="mt-6 text-center">
+            <a href="/" className="text-[#C9A45C] hover:text-[#d4af37] text-sm font-medium">← Back to Website</a>
+          </div>
         </div>
       </div>
     </div>

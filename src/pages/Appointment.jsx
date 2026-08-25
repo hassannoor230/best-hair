@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, CalendarDays, Check, Clock3, CreditCard, Landmark, LockKeyhole, Scissors, UserRound } from "lucide-react";
+import { apiClient } from "../lib/apiClient";
 
 const services = [
   { id: "haircut", name: "Classic Haircut", price: 500, duration: "30 min", detail: "A tailored cut with a polished finish." },
@@ -15,6 +16,8 @@ const timeSlots = ["10:00 AM", "11:00 AM", "12:00 PM", "2:00 PM", "3:00 PM", "4:
 const Appointment = () => {
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ service: "", date: "", time: "", name: "", phone: "", email: "", note: "", payment: "cash" });
   const selectedService = useMemo(() => services.find((service) => service.id === form.service), [form.service]);
   const today = new Date().toISOString().split("T")[0];
@@ -28,6 +31,28 @@ const Appointment = () => {
     return true;
   };
   const continueBooking = () => { if (canContinue()) setStep((current) => Math.min(current + 1, 5)); };
+
+  const handleConfirmBooking = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const payload = {
+        customerName: form.name.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim(),
+        service: selectedService?.name || "",
+        preferredDate: new Date(form.date).toISOString(),
+        preferredTime: form.time,
+        message: form.note.trim(),
+      };
+      await apiClient.post("/appointments", payload);
+      setSubmitted(true);
+    } catch (err) {
+      setError(err.response?.data?.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (submitted) return (
     <section className="min-h-[75vh] bg-background flex items-center py-20 px-5">
@@ -53,9 +78,9 @@ const Appointment = () => {
             {step === 2 && <section><h2 className="font-heading text-3xl text-primary mb-2">Choose a date</h2><p className="text-muted mb-7">We are open every day from 10:00 AM to 1:00 AM.</p><label className="block max-w-md"><span className="text-sm font-semibold text-primary mb-2 block">Preferred date</span><div className="relative"><CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-accent pointer-events-none" /><input value={form.date} min={today} onChange={(event) => update("date", event.target.value)} type="date" className="w-full border border-[#ded5c9] px-12 py-4 text-primary focus:outline-none focus:border-accent" /></div></label></section>}
             {step === 3 && <section><h2 className="font-heading text-3xl text-primary mb-2">Choose a time</h2><p className="text-muted mb-7">Available times for {form.date || "your selected date"}.</p><div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{timeSlots.map((time) => <button type="button" key={time} onClick={() => update("time", time)} className={`py-4 border text-sm font-semibold transition-colors ${form.time === time ? "bg-primary text-white border-primary" : "border-[#ded5c9] text-primary hover:border-accent"}`}><Clock3 className="inline-block w-4 h-4 mr-2 text-accent" />{time}</button>)}</div></section>}
             {step === 4 && <section><h2 className="font-heading text-3xl text-primary mb-2">Your details</h2><p className="text-muted mb-7">So we can confirm your appointment with you.</p><div className="grid sm:grid-cols-2 gap-5"><label className="sm:col-span-2"><span className="text-sm font-semibold text-primary mb-2 block">Full name *</span><input value={form.name} onChange={(event) => update("name", event.target.value)} className="w-full border border-[#ded5c9] px-4 py-3.5 focus:outline-none focus:border-accent" placeholder="Your full name" /></label><label><span className="text-sm font-semibold text-primary mb-2 block">Phone number *</span><input value={form.phone} onChange={(event) => update("phone", event.target.value)} type="tel" className="w-full border border-[#ded5c9] px-4 py-3.5 focus:outline-none focus:border-accent" placeholder="03XX XXX XXXX" /></label><label><span className="text-sm font-semibold text-primary mb-2 block">Email address</span><input value={form.email} onChange={(event) => update("email", event.target.value)} type="email" className="w-full border border-[#ded5c9] px-4 py-3.5 focus:outline-none focus:border-accent" placeholder="you@example.com" /></label><label className="sm:col-span-2"><span className="text-sm font-semibold text-primary mb-2 block">Special request <span className="text-muted font-normal">(optional)</span></span><textarea value={form.note} onChange={(event) => update("note", event.target.value)} rows="4" className="w-full border border-[#ded5c9] px-4 py-3.5 focus:outline-none focus:border-accent resize-none" placeholder="Tell us anything that will help us prepare for your visit." /></label></div></section>}
-            {step === 5 && <section><h2 className="font-heading text-3xl text-primary mb-2">Confirm your booking</h2><p className="text-muted mb-7">Choose how you would like to pay at the salon.</p><div className="grid sm:grid-cols-2 gap-4 mb-8">{[["cash", Landmark, "Pay at salon", "Cash payment when you arrive."], ["card", CreditCard, "Card payment", "Debit or credit card at the salon."]].map(([id, Icon, title, text]) => <button type="button" key={id} onClick={() => update("payment", id)} className={`text-left p-6 border ${form.payment === id ? "border-accent bg-[#fbf7ef]" : "border-[#e8e0d5]"}`}><Icon className="w-6 h-6 text-accent mb-7" /><h3 className="font-heading text-xl text-primary mb-2">{title}</h3><p className="text-sm text-muted">{text}</p></button>)}</div><div className="flex items-center gap-3 text-sm text-muted"><LockKeyhole className="w-4 h-4 text-accent" />Your request is reviewed before any payment is taken.</div></section>}
+            {step === 5 && <section><h2 className="font-heading text-3xl text-primary mb-2">Confirm your booking</h2><p className="text-muted mb-7">Choose how you would like to pay at the salon.</p><div className="grid sm:grid-cols-2 gap-4 mb-8">{[["cash", Landmark, "Pay at salon", "Cash payment when you arrive."], ["card", CreditCard, "Card payment", "Debit or credit card at the salon."]].map(([id, Icon, title, text]) => <button type="button" key={id} onClick={() => update("payment", id)} className={`text-left p-6 border ${form.payment === id ? "border-accent bg-[#fbf7ef]" : "border-[#e8e0d5]"}`}><Icon className="w-6 h-6 text-accent mb-7" /><h3 className="font-heading text-xl text-primary mb-2">{title}</h3><p className="text-sm text-muted">{text}</p></button>)}</div>{error && <p className="text-red-500 text-sm mb-4">{error}</p>}<div className="flex items-center gap-3 text-sm text-muted"><LockKeyhole className="w-4 h-4 text-accent" />Your request is reviewed before any payment is taken.</div></section>}
 
-            <div className="flex items-center justify-between gap-4 border-t border-[#e8e0d5] mt-10 pt-7"><button type="button" onClick={() => setStep((current) => Math.max(current - 1, 1))} disabled={step === 1} className="text-sm font-semibold text-primary disabled:opacity-30">Back</button>{step < 5 ? <button type="button" onClick={continueBooking} disabled={!canContinue()} className="btn-primary disabled:opacity-40">Continue <ArrowRight className="w-4 h-4 ml-2" /></button> : <button type="button" onClick={() => setSubmitted(true)} className="btn-primary">Confirm booking <Check className="w-4 h-4 ml-2" /></button>}</div>
+            <div className="flex items-center justify-between gap-4 border-t border-[#e8e0d5] mt-10 pt-7"><button type="button" onClick={() => setStep((current) => Math.max(current - 1, 1))} disabled={step === 1} className="text-sm font-semibold text-primary disabled:opacity-30">Back</button>{step < 5 ? <button type="button" onClick={continueBooking} disabled={!canContinue()} className="btn-primary disabled:opacity-40">Continue <ArrowRight className="w-4 h-4 ml-2" /></button> : <button type="button" onClick={handleConfirmBooking} disabled={loading} className="btn-primary disabled:opacity-40">{loading ? "Booking..." : "Confirm booking"}{!loading && <Check className="w-4 h-4 ml-2" />}</button>}</div>
           </main>
           <aside className="bg-primary text-white p-7 sm:p-8 lg:sticky lg:top-24"><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent mb-6">Your appointment</p>{selectedService ? <><h2 className="font-heading text-3xl mb-2">{selectedService.name}</h2><p className="text-white/60 text-sm mb-7">{selectedService.duration} &bull; Rs. {selectedService.price}</p></> : <p className="text-white/60 leading-relaxed mb-8">Your selected service and appointment details will appear here.</p>}<div className="space-y-5 border-t border-white/15 pt-6 text-sm">{[["Date", form.date], ["Time", form.time], ["Guest", form.name], ["Payment", form.payment === "cash" ? "Pay at salon" : "Card payment"]].map(([label, value]) => <div key={label} className="flex justify-between gap-4"><span className="text-white/50">{label}</span><span className="text-right font-medium">{value || "—"}</span></div>)}</div><div className="border-t border-white/15 mt-7 pt-6 flex justify-between items-center"><span className="text-white/60 text-sm">Total</span><span className="font-heading text-3xl text-accent">Rs. {selectedService?.price || "—"}</span></div></aside>
         </div>

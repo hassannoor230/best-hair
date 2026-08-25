@@ -8,8 +8,8 @@ const AdminLayout = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#172A3A]">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
+        <div className="text-white text-lg">Loading...</div>
       </div>
     );
   }
@@ -19,10 +19,12 @@ const AdminLayout = () => {
   }
 
   return (
-    <div className="min-h-screen flex bg-[#172A3A]">
+    <div className="min-h-screen flex bg-[#0a0a0a]">
       <AdminSidebar />
-      <main className="flex-1 ml-64 p-8">
-        <Outlet />
+      <main className="flex-1 ml-72">
+        <div className="p-8 lg:p-12">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
