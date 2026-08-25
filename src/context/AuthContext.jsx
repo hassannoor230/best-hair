@@ -30,12 +30,17 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     const res = await apiClient.post("/auth/login", { email, password });
     const userData = res.data?.data?.user || null;
+    const token = res.data?.data?.token || null;
+    if (token) {
+      localStorage.setItem("token", token);
+    }
     setUser(userData);
     return userData;
   };
 
   const logout = async () => {
     await apiClient.post("/auth/logout");
+    localStorage.removeItem("token");
     setUser(null);
   };
 
